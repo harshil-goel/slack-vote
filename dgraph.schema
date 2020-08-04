@@ -1,0 +1,19 @@
+type Poll {
+	pollName: String!
+	id: String! @id
+        active: Int
+	answers: [Answer] @hasInverse(field: poll)
+}
+
+type Answer {
+	answerName: String! 
+	id: ID!
+	votes: [Vote]
+	poll: Poll
+}
+
+type Vote {
+	userName: String! 
+	userID: String!
+	id: ID!
+}

@@ -20,8 +20,10 @@
   "dependencies": {
     "body-parser": "^1.13.1",
     "express": "^4.13.0",
+    "graphql": "^15.3.0",
+    "graphql-request": "^1.8.2",
     "node-slackbot": "^0.0.6",
-    "underscore": "^1.8.3",
-    "redis": "^0.12.1"
+    "redis": "^0.12.1",
+    "underscore": "^1.8.3"
   }
 }

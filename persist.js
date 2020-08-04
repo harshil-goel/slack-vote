@@ -1,12 +1,89 @@
+const { request } = require('graphql-request')
+var endpoint = 'http://localhost:8080/graphql'
+
+const get_query = `
+query($inp: String!) {
+  queryPoll(filter:{id:{eq:$inp}}) {
+      pollName
+	active
+	answers {
+	answerName
+	id
+	votes {
+		userName
+		userID
+	}
+	}
+	}
+}
+`
+
+const update_query = `
+mutation($inp: PollPatch, $id:String!) {
+  updatePoll(input:{
+    filter: {id: {eq: $id}}, 
+    set:$inp
+  }) {
+    poll {
+      pollName
+	active
+	answers {
+	answerName
+	id
+	votes {
+		userName
+		userID
+	}
+	}
+	}
+  }
+}
+`
+
+const add_query = `
+mutation($inp: AddPollInput!) {
+  addPoll(input: [$inp]) {
+    poll {
+      pollName
+	active
+	answers {
+	answerName
+	id
+	votes {
+		userName
+		userID
+	}
+	}
+	}
+  }
+}
+`
+
+const delete_poll_query = `
+mutation($id: String) {
+  deletePoll(filter:{id:{eq: $id}}) {
+    msg
+  }
+}
+`
+
+const delete_query = `
+mutation($id: ID!){
+  deleteAnswer(filter:{id:[$id]}) {
+    msg
+  }
+}
+`
+
 var redis = require('redis')
-  , pollnameText = ''
-  , triggerWord = ''
-  , pollnameText = ''
-  , slackRes = ''
-  , client = ''
-  , rtg = ''
-  , operationComplete = false
-  , ts = Math.floor(Date.now() / 1000);
+	, pollnameText = ''
+	, triggerWord = ''
+	, pollnameText = ''
+	, slackRes = ''
+	, client = ''
+	, rtg = ''
+	, operationComplete = false
+	, ts = Math.floor(Date.now() / 1000);
 
 /*
  * Set correct environment for redis.
@@ -16,62 +93,73 @@ var redis = require('redis')
  *
  */
 
- if (process.env.REDIS_URL) {
-   rtg = require('url').parse(process.env.REDIS_URL);
-
-// if (process.env.REDISTOGO_URL) {
-//  rtg = require('url').parse(process.env.REDISTOGO_URL);
-
-  client = redis.createClient(rtg.port, rtg.hostname);
-  client.auth(rtg.auth.split(':')[1]);
-} else {
-  client = redis.createClient();
+var getPoll = async function(pollId, callback) {
+	try {
+		console.log("****GET POLL****", pollId);
+		const data = await request(endpoint, get_query, {inp: pollId})
+		var reply = JSON.stringify(data["queryPoll"][0], undefined, 2)
+		console.log("Fetching", reply, callback)
+		if (data["queryPoll"].length > 0) {
+			console.log("here", reply)
+			callback(reply);
+		} else {
+			callback(null);
+		}
+	} catch(err) {
+		console.log("here1", err);
+		callback(null);
+	}
 }
 
-/*
- * TBD: there should be error handling on all of these to handle no reply responses.
- */
+
 var dbActions = {
+	deletePoll: async function(pollKey, callback) {
+		try {
+		const data = await request(endpoint, delete_poll_query, {id: pollKey})
+			callback(data)
+		} catch (err) {
+			console.log("here2", err);
+			callback(null);
+		}
+	},
 
-  /*
-   * Set poll data.
-   */
-  setPoll: function(pollKey, pollData, callback) {
-    client.set(pollKey, pollData, function (err, reply) {
-      if (reply) {
-        callback(reply);
-      }
-    });
-  },
+	deleteAnswer: async function(answerKey, callback) {
+		try {
+		const data = await request(endpoint, delete_query, {id: answerKey})
+			callback(data)
+		} catch (err) {
+			console.log("here2", err);
+			callback(null);
+		}
+	},
 
-  /*
-   * Disable poll. The pollData var should have a field that sets the poll to inactive
-   */
-  disablePoll: function(pollKey, pollData, callback) {
-    client.set(pollKey, pollData, function (err, reply) {
-      if (err) {
-        console.log(pollKey);
-        console.log(pollData);
-        console.log(err);
-      }
-      if (reply) {
-        callback(reply);
-      }
-    });
-  },
+	/*
+	 * Set poll data.
+	 */
+	setPoll: async function(pollKey, pollData, callbacki) {
+		getPoll(pollKey, async (reply) => {
+			console.log("Setting")
+			console.log(reply)
+			console.log("Setting to:", pollData)
+			if (reply) {
+				const vars = {inp: JSON.parse(pollData), id: pollKey}
+				const data = await request(endpoint, update_query, vars)
+				console.log("LOG updating", data) 
+				callbacki(pollData);
+			} else {
+				var temp = Object.assign({id: pollKey}, JSON.parse(pollData))
+				const data = await request(endpoint, add_query, {inp: temp})
+				console.log("LOG setting", data)
+				callbacki(pollData);
+			}
+		}) 
+	},
 
-  /*
-   * Get poll from id.
-   */
-  getPoll: function(pollId, callback) {
-    client.get(pollId, function (err, reply) {
-      if (reply) {
-        callback(reply);
-      } else {
-        callback(null);
-      }
-    });
-  }
+	/*
+	 * Get poll from id.
+	 */
+	getPoll: getPoll
+
 };
 
 module.exports = dbActions;

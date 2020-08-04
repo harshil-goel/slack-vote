@@ -54,11 +54,16 @@ exports.post = function (req, res, next) {
     if (poll_string) {
       data = JSON.parse(poll_string);
       if (data.active == 1) {
+	console.log("BEFORE", data.answers);
+	var answerID = null;
         _.each(data.answers, function(answer) {
           if (answerText === answer.answerName) {
             // there is a votes array already, because this isn't the first vote
+	    console.log("Pushing", answer)
             answer.votes.push(postedVote);
             answerMatch = true;
+	    answerID = answer.id;
+	    delete answer.id; 
           }
         });
 
@@ -70,10 +75,15 @@ exports.post = function (req, res, next) {
           };
           data.answers.push(newAnswer);
           console.log('Poll after submission: ' + poll_string);
-        }
-        answerMatch = false; // not sure why this is here - ben833
-        dbActions.setPoll(pollId, JSON.stringify(data), handleResults);
-        dbActions.getPoll(pollId, function(result_string){console.log('Poll after submission: ' + result_string);});
+        } else {
+		console.log("***DELETING***", answerID)
+		dbActions.deleteAnswer(answerID, () => {})
+	}
+
+	console.log("AFTER", data.answers);
+
+        answerMatch = false;
+        dbActions.setPoll(pollId, JSON.stringify(data), proxy(pollId));
       }
       else {
         data = {
@@ -83,6 +93,13 @@ exports.post = function (req, res, next) {
         handleResults();
       }
     }
+  }
+
+  function proxy(pollId) {
+	return () => {
+		dbActions.getPoll(pollId, function(result_string){console.log('Poll after submission: ' + result_string);});
+		handleResults()
+	}
   }
 
   function handleResults() {

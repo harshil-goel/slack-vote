@@ -6,6 +6,16 @@ var data = ''
   , dbActions = require('./../persist.js')
   , channelId = '';
 
+function makeid(length) {
+   var result           = '';
+   var characters       = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+   var charactersLength = characters.length;
+   for ( var i = 0; i < length; i++ ) {
+      result += characters.charAt(Math.floor(Math.random() * charactersLength));
+   }
+   return result;
+}
+
 exports.post = function (req, res, next) {
   /*
    * Get poll data.
@@ -19,9 +29,12 @@ exports.post = function (req, res, next) {
   function setData(poll_string) {
     if (poll_string) {
       data = JSON.parse(poll_string);
+      dbActions.deletePoll(pollId, ()=>{});
 
       // disallow more voting but save the data to keep some kind of an archive
       data.active = 0;
+      data.id = makeid(10);
+      console.log("HERE", data)
 
       closePoll(data);
     }
@@ -33,7 +46,7 @@ exports.post = function (req, res, next) {
   function closePoll(data) {
     slackRes = 'Closing active poll. Here are the final results\n ' + tally.printPoll(data);
     console.log('closePoll: ' + slackRes);
-    dbActions.disablePoll(pollId, JSON.stringify(data), confirmClosePoll);
+    dbActions.setPoll(data.id, JSON.stringify(data), confirmClosePoll);
   }
   function confirmClosePoll(data) {
     console.log('confirmClosePoll: ' + slackRes);

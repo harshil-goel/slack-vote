@@ -12,6 +12,16 @@ var poll = ''
   , newPollID = ''
   , ts = Math.floor(Date.now() / 1000);
 
+function makeid(length) {
+   var result           = '';
+   var characters       = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+   var charactersLength = characters.length;
+   for ( var i = 0; i < length; i++ ) {
+      result += characters.charAt(Math.floor(Math.random() * charactersLength));
+   }
+   return result;
+}
+
 exports.post = function(req, res, next) {
 
   console.log('Start vote route.');
@@ -40,7 +50,11 @@ exports.post = function(req, res, next) {
     if (data === null) {
       console.log('There is no current active poll, setting up new poll.');
     } else {
-      console.log('Current poll is closing.');
+      var temp = JSON.parse(data)
+      temp.active = 0;
+      console.log('Current poll is closing.', temp);
+      dbActions.setPoll(makeid(10), JSON.stringify(temp), () => {})
+      dbActions.deletePoll(newPollID, () => {})
       slackRes = 'Closing Active Poll. Here were the results of the now-closed poll.\n' + tally.printPoll(JSON.parse(data)) + '\n';
     }
   }
