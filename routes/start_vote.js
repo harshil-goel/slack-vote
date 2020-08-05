@@ -72,6 +72,10 @@ exports.post = function(req, res, next) {
   }
 
   function confirmNewPoll(data) {
+    if (data == null) {
+	console.log("NULLLLLL");
+	return;
+    }
     slackRes += '\nYour poll is set up. Please start voting for ' + tally.printPoll(JSON.parse(data));
     res.json({text: slackRes});
   }

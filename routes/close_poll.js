@@ -29,14 +29,15 @@ exports.post = function (req, res, next) {
   function setData(poll_string) {
     if (poll_string) {
       data = JSON.parse(poll_string);
-      dbActions.deletePoll(pollId, ()=>{});
 
       // disallow more voting but save the data to keep some kind of an archive
       data.active = 0;
       data.id = makeid(10);
       console.log("HERE", data)
+      dbActions.setPoll(data.id, JSON.stringify(data), confirmClosePoll);
 
       closePoll(data);
+      dbActions.deletePoll(pollId, ()=>{});
     }
   }
 
@@ -46,7 +47,6 @@ exports.post = function (req, res, next) {
   function closePoll(data) {
     slackRes = 'Closing active poll. Here are the final results\n ' + tally.printPoll(data);
     console.log('closePoll: ' + slackRes);
-    dbActions.setPoll(data.id, JSON.stringify(data), confirmClosePoll);
   }
   function confirmClosePoll(data) {
     console.log('confirmClosePoll: ' + slackRes);

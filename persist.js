@@ -1,4 +1,5 @@
 const { request } = require('graphql-request')
+const assert = require('assert').strict;
 var endpoint = 'http://localhost:8080/graphql'
 
 const get_query = `
@@ -96,11 +97,10 @@ var redis = require('redis')
 var getPoll = async function(pollId, callback) {
 	try {
 		console.log("****GET POLL****", pollId);
+		assert(pollId != null)
 		const data = await request(endpoint, get_query, {inp: pollId})
 		var reply = JSON.stringify(data["queryPoll"][0], undefined, 2)
-		console.log("Fetching", reply, callback)
 		if (data["queryPoll"].length > 0) {
-			console.log("here", reply)
 			callback(reply);
 		} else {
 			callback(null);
@@ -138,18 +138,15 @@ var dbActions = {
 	 */
 	setPoll: async function(pollKey, pollData, callbacki) {
 		getPoll(pollKey, async (reply) => {
-			console.log("Setting")
-			console.log(reply)
-			console.log("Setting to:", pollData)
+			assert(pollKey != null);
+			console.log("Setting to:", pollKey)
 			if (reply) {
 				const vars = {inp: JSON.parse(pollData), id: pollKey}
 				const data = await request(endpoint, update_query, vars)
-				console.log("LOG updating", data) 
 				callbacki(pollData);
 			} else {
 				var temp = Object.assign({id: pollKey}, JSON.parse(pollData))
 				const data = await request(endpoint, add_query, {inp: temp})
-				console.log("LOG setting", data)
 				callbacki(pollData);
 			}
 		}) 
