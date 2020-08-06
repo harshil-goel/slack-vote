@@ -36,6 +36,7 @@ exports.post = function(req, res, next) {
   poll = {
     'pollName': pollnameText,
     'active': 1,
+    'created':  new Date(),
     'answers': []
   };
 

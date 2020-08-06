@@ -5,12 +5,14 @@ var endpoint = 'http://localhost:8080/graphql'
 const get_query = `
 query($inp: String!) {
   queryPoll(filter:{id:{eq:$inp}}) {
+      created
       pollName
 	active
 	answers {
 	answerName
 	id
 	votes {
+		created
 		userName
 		userID
 	}
@@ -26,12 +28,14 @@ mutation($inp: PollPatch, $id:String!) {
     set:$inp
   }) {
     poll {
+      created
       pollName
 	active
 	answers {
 	answerName
 	id
 	votes {
+		created
 		userName
 		userID
 	}
@@ -45,12 +49,14 @@ const add_query = `
 mutation($inp: AddPollInput!) {
   addPoll(input: [$inp]) {
     poll {
+    created
       pollName
 	active
 	answers {
 	answerName
 	id
 	votes {
+		created
 		userName
 		userID
 	}

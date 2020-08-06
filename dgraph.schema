@@ -1,8 +1,9 @@
 type Poll {
-	pollName: String!
+	pollName: String! @search(by: [regexp])
 	id: String! @id
         active: Int
 	answers: [Answer] @hasInverse(field: poll)
+	created: DateTime
 }
 
 type Answer {
@@ -16,4 +17,5 @@ type Vote {
 	userName: String! 
 	userID: String!
 	id: ID!
+	created: DateTime
 }

@@ -37,13 +37,14 @@ exports.post = function (req, res, next) {
   answerText = answerText.replace(triggerWord + ' ','').toLowerCase();
   userName = req.body.user_name;
   userID = req.body.user_id;
-  timestamp = req.body.timestamp;
+  timestamp = new Date();
   pollId = 'activePoll_' + req.body.channel_id;
+  console.log("TIMESTAMP", req.body.timestamp);
 
   postedVote = {
     'userName': userName,
     'userID': userID,
-    'timestamp': timestamp
+    'created': timestamp
   };
 
   console.log('Incoming post. Answer text: ' + answerText + '. pollId: ' + pollId + '\n');
